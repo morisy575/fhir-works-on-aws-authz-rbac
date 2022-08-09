@@ -48,7 +48,7 @@ export class RBACHandler implements Authorization {
 
     async verifyAccessToken(request: VerifyAccessTokenRequest): Promise<KeyValueMap> {
         const decoded = decode(request.accessToken, { json: true }) ?? {};
-        const groups: string[] = decoded['cognito:groups'] ?? [];
+        const groups: string[] = decoded['realm_access']['roles'] ?? [];
 
         if (request.bulkDataAuth) {
             this.isBulkDataAccessAllowed(groups, request.bulkDataAuth);
@@ -67,7 +67,7 @@ export class RBACHandler implements Authorization {
     }
 
     async isBundleRequestAuthorized(request: AuthorizationBundleRequest): Promise<void> {
-        const groups: string[] = request.userIdentity['cognito:groups'] ?? [];
+        const groups: string[] = request.userIdentity['realm_access']['roles'] ?? [];
 
         const authZPromises: Promise<void>[] = request.requests.map(async (batch: BatchReadWriteRequest) => {
             return this.isAllowed(groups, batch.operation, batch.resourceType);
@@ -78,7 +78,7 @@ export class RBACHandler implements Authorization {
 
     async getAllowedResourceTypesForOperation(request: AllowedResourceTypesForOperationRequest): Promise<string[]> {
         const { userIdentity, operation } = request;
-        const groups: string[] = userIdentity['cognito:groups'] ?? [];
+        const groups: string[] = userIdentity['realm_access']['roles'] ?? [];
 
         return groups.flatMap((group) => {
             const groupRule = this.rules.groupRules[group];
